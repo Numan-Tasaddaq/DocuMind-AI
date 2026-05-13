@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DocuMind AI Workspace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+  <div class="workspace">
+    <aside class="history-rail">
+      <div class="brand">
+        <span class="brand-dot"></span>
+        <span>DocuMind AI</span>
+      </div>
+
+      <button id="new-chat-btn" class="new-chat-btn">
+        <i class="fas fa-pen-to-square"></i>
+        <span>New Chat</span>
+      </button>
+
+      <section class="history-block">
+        <p class="history-label">Conversation History</p>
+        <div id="history-list" class="history-list"></div>
+      </section>
+    </aside>
+
+    <main class="chat-shell">
+      <header class="chat-topbar">
+        <h1 id="conversation-title">Document Assistant</h1>
+        <div class="top-actions">
+          <label class="upload-btn" for="doc-upload">
+            <i class="fas fa-file-arrow-up"></i>
+            Upload Document
+          </label>
+          <input id="doc-upload" type="file" accept=".pdf,.doc,.docx,.txt" multiple hidden />
+        </div>
+      </header>
+
+      <section id="uploaded-files" class="uploaded-files"></section>
+
+      <section id="chat-thread" class="chat-thread" aria-live="polite"></section>
+
+      <form id="chat-form" class="chat-composer">
+        <textarea id="chat-input" rows="1" placeholder="Ask a question about your document..." required></textarea>
+        <button type="submit" class="send-btn">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </form>
+    </main>
+
+    <aside class="profile-rail">
+      <section class="profile-card">
+        <div class="avatar">
+          <i class="fas fa-user"></i>
+        </div>
+        <h2 id="profile-name">User</h2>
+        <p id="profile-email">user@example.com</p>
+      </section>
+
+      <section class="settings-card">
+        <h3>Change Password</h3>
+        <form id="change-password-form" class="settings-form">
+          <label for="current-password">Current Password</label>
+          <input id="current-password" type="password" required />
+
+          <label for="new-password">New Password</label>
+          <input id="new-password" type="password" minlength="8" required />
+
+          <label for="confirm-password">Confirm New Password</label>
+          <input id="confirm-password" type="password" minlength="8" required />
+
+          <button type="submit" class="settings-btn">Update Password</button>
+        </form>
+      </section>
+
+      <button id="logout-btn" class="logout-btn">
+        <i class="fas fa-right-from-bracket"></i>
+        Logout
+      </button>
+      <p id="dashboard-message" class="dashboard-message"></p>
+    </aside>
+  </div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DocuMind AI - Welcome</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Manrope:wght@500;700&display=swap" rel="stylesheet" />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+ <main class="page">
+    <!-- left hero section -->
+    <section class="hero">
+      <div class="eyebrow">
+        <i class="fas fa-brain" style="font-size: 0.7rem;"></i> DocuMind AI
+      </div>
+      <h1>Turn your documents into instant answers.</h1>
+      <p class="subtitle">
+        Sign in to continue your workspace, or create an account to start building
+        your AI document assistant in minutes.
+      </p>
+      <div class="hero-cards">
+        <article>
+          <h2><i class="fas fa-bolt"></i> Fast Retrieval</h2>
+          <p>Search and summarize across thousands of pages with contextual precision.</p>
+        </article>
+        <article>
+          <h2><i class="fas fa-lock"></i> Secure Access</h2>
+          <p>Private account-based access designed for team collaboration & enterprise-grade safety.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- right authentication panel -->
+    <section class="auth-shell">
+      <div class="tabs" role="tablist" aria-label="Authentication tabs">
+        <button class="tab active" data-target="login-form" role="tab" aria-selected="true">Login</button>
+        <button class="tab" data-target="signup-form" role="tab" aria-selected="false">Sign Up</button>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <form id="login-form" class="auth-form active" novalidate>
+        <h3>Welcome back</h3>
+        <label for="login-email">Email</label>
+        <div class="input-wrapper">
+          <i class="fas fa-envelope"></i>
+          <input id="login-email" type="email" placeholder="you@company.com" autocomplete="email" required />
+        </div>
+
+        <label for="login-password">Password</label>
+        <div class="input-wrapper">
+          <i class="fas fa-lock"></i>
+          <input id="login-password" type="password" placeholder="Enter your password" autocomplete="current-password" required />
+        </div>
+
+        <div class="captcha-block" data-captcha-for="login-form">
+          <div class="captcha-head">
+            <span class="captcha-title"><i class="fas fa-shield-halved"></i> CAPTCHA check</span>
+            <button type="button" class="captcha-refresh" data-refresh-captcha="login-form" aria-label="Refresh captcha">
+              <i class="fas fa-rotate-right"></i>
+            </button>
+          </div>
+          <p class="captcha-question" id="login-captcha-question">0 + 0 = ?</p>
+          <label for="login-captcha-answer">Enter result</label>
+          <input id="login-captcha-answer" type="text" inputmode="numeric" placeholder="Type answer" required />
+        </div>
+
+        <div class="extra-links">
+          <a href="#" id="forgot-password-demo" class="forgot-link">Forgot password?</a>
+        </div>
+
+        <button type="submit" class="primary-btn"><i class="fas fa-arrow-right-to-bracket" style="margin-right: 6px;"></i> Login</button>
+
+        <div class="divider">
+          <div class="divider-line"></div>
+          <span>or continue with</span>
+          <div class="divider-line"></div>
+        </div>
+
+        <div class="social-grid">
+          <button type="button" class="social-btn google-btn" data-social="google" data-mode="login">
+            <i class="fab fa-google"></i><span>Google</span>
+          </button>
+          <button type="button" class="social-btn github-btn" data-social="github" data-mode="login">
+            <i class="fab fa-github"></i><span>GitHub</span>
+          </button>
+        </div>
+      </form>
+
+      <!-- SIGNUP FORM -->
+      <form id="signup-form" class="auth-form" novalidate>
+        <h3>Create account</h3>
+        <label for="signup-name">Full Name</label>
+        <div class="input-wrapper">
+          <i class="fas fa-user"></i>
+          <input id="signup-name" type="text" placeholder="Alex Johnson" autocomplete="name" required />
+        </div>
+
+        <label for="signup-email">Email</label>
+        <div class="input-wrapper">
+          <i class="fas fa-envelope"></i>
+          <input id="signup-email" type="email" placeholder="hello@documind.ai" autocomplete="email" required />
+        </div>
+
+        <label for="signup-password">Password</label>
+        <div class="input-wrapper">
+          <i class="fas fa-key"></i>
+          <input id="signup-password" type="password" placeholder="Create a strong password" minlength="8" autocomplete="new-password" required />
+        </div>
+
+        <div class="captcha-block" data-captcha-for="signup-form">
+          <div class="captcha-head">
+            <span class="captcha-title"><i class="fas fa-shield-halved"></i> CAPTCHA check</span>
+            <button type="button" class="captcha-refresh" data-refresh-captcha="signup-form" aria-label="Refresh captcha">
+              <i class="fas fa-rotate-right"></i>
+            </button>
+          </div>
+          <p class="captcha-question" id="signup-captcha-question">0 + 0 = ?</p>
+          <label for="signup-captcha-answer">Enter result</label>
+          <input id="signup-captcha-answer" type="text" inputmode="numeric" placeholder="Type answer" required />
+        </div>
+
+        <button type="submit" class="primary-btn"><i class="fas fa-user-plus" style="margin-right: 6px;"></i> Sign Up</button>
+
+        <div class="divider">
+          <div class="divider-line"></div>
+          <span>or sign up with</span>
+          <div class="divider-line"></div>
+        </div>
+
+        <div class="social-grid">
+          <button type="button" class="social-btn google-btn" data-social="google" data-mode="signup">
+            <i class="fab fa-google"></i><span>Google</span>
+          </button>
+          <button type="button" class="social-btn github-btn" data-social="github" data-mode="signup">
+            <i class="fab fa-github"></i><span>GitHub</span>
+          </button>
+        </div>
+      </form>
+
+      <div id="auth-message" aria-live="polite"></div>
+    </section>
+  </main>
+
+
+  <script src="app.js"></script>
+</body>
+</html>

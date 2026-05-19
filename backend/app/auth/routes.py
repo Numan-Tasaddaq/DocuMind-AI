@@ -380,10 +380,10 @@ def oauth_start(provider: str, mode: str = "login") -> RedirectResponse:
 @router.get("/oauth/{provider}/callback")
 def oauth_callback(
     provider: str,
+    request: FastAPIRequest,
     code: str | None = None,
     state: str | None = None,
     error: str | None = None,
-    request: FastAPIRequest | None = None,
     db: Session = Depends(get_db),
 ) -> RedirectResponse:
     normalized_provider = _validate_provider(provider)
@@ -391,7 +391,7 @@ def oauth_callback(
     if error:
         return _frontend_redirect(success=False, message=f"{normalized_provider.title()} sign-in cancelled.")
 
-    if not code or not state or request is None:
+    if not code or not state:
         return _frontend_redirect(success=False, message="OAuth callback is missing required data.")
 
     cookie_state = request.cookies.get(f"oauth_state_{normalized_provider}")

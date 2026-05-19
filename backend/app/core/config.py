@@ -27,6 +27,26 @@ class Settings(BaseSettings):
 
     cors_origins: str = Field(default="*", alias="CORS_ORIGINS")
 
+    frontend_auth_callback_url: str = Field(
+        default="http://127.0.0.1:5500/frontend/index.html",
+        alias="FRONTEND_AUTH_CALLBACK_URL",
+    )
+    oauth_state_ttl_seconds: int = Field(default=600, alias="OAUTH_STATE_TTL_SECONDS")
+
+    google_client_id: str = Field(default="", alias="GOOGLE_CLIENT_ID")
+    google_client_secret: str = Field(default="", alias="GOOGLE_CLIENT_SECRET")
+    google_redirect_uri: str = Field(
+        default="http://127.0.0.1:8000/api/auth/oauth/google/callback",
+        alias="GOOGLE_REDIRECT_URI",
+    )
+
+    github_client_id: str = Field(default="", alias="GITHUB_CLIENT_ID")
+    github_client_secret: str = Field(default="", alias="GITHUB_CLIENT_SECRET")
+    github_redirect_uri: str = Field(
+        default="http://127.0.0.1:8000/api/auth/oauth/github/callback",
+        alias="GITHUB_REDIRECT_URI",
+    )
+
     @property
     def effective_database_url(self) -> str:
         if self.database_url:

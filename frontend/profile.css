@@ -1,0 +1,146 @@
+:root {
+  --bg-main: #0b1220;
+  --panel: #131d33;
+  --line: #2a385a;
+  --text-main: #e6edf8;
+  --text-soft: #9ba9c5;
+  --accent: #2563eb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "IBM Plex Sans", sans-serif;
+  color: var(--text-main);
+  background: radial-gradient(circle at 15% 10%, #1d4ed822, transparent 35%), var(--bg-main);
+}
+
+.profile-page {
+  width: min(900px, 92vw);
+  margin: 1.3rem auto;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.back-link {
+  color: #bfdbfe;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.logout-btn {
+  border: 1px solid #7f1d1d;
+  border-radius: 10px;
+  padding: 0.55rem 0.75rem;
+  background: #3f1313;
+  color: #fecaca;
+  cursor: pointer;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 1.1rem;
+}
+
+.card h1 {
+  margin: 0;
+  font-family: "Sora", sans-serif;
+}
+
+.subtitle {
+  margin-top: 0.35rem;
+  color: var(--text-soft);
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.78rem 0;
+  border-bottom: 1px solid #26355a;
+}
+
+.row span {
+  color: var(--text-soft);
+}
+
+.row strong {
+  text-align: right;
+}
+
+.primary-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid #365fd1;
+  border-radius: 10px;
+  padding: 0.62rem 0.8rem;
+  text-decoration: none;
+  color: #eaf2ff;
+  background: var(--accent);
+  cursor: pointer;
+}
+
+.password-section {
+  margin-top: 1rem;
+  border-top: 1px solid #26355a;
+  padding-top: 1rem;
+}
+
+.password-section h2 {
+  margin: 0 0 0.8rem;
+  font-family: "Sora", sans-serif;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.form {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.form label {
+  font-size: 0.82rem;
+  color: var(--text-soft);
+}
+
+.form input {
+  border: 1px solid var(--line);
+  background: #0d162c;
+  color: var(--text-main);
+  border-radius: 10px;
+  padding: 0.62rem 0.7rem;
+  font: inherit;
+}
+
+.form .primary-btn {
+  margin-top: 0.4rem;
+  justify-content: center;
+}
+
+.message {
+  min-height: 1.2rem;
+  margin-top: 0.8rem;
+  color: var(--text-soft);
+}
+
+.message.error {
+  color: #fda4af;
+}

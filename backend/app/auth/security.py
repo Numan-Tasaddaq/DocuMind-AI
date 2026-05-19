@@ -1,7 +1,8 @@
+import secrets
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
-from jose import jwt
+from jose import JWTError, jwt
 from passlib.context import CryptContext
 
 from app.core.config import get_settings
@@ -22,3 +23,16 @@ def create_access_token(user_id: UUID, email: str) -> str:
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.jwt_expires_minutes)
     payload = {"sub": str(user_id), "email": email, "exp": expires_at}
     return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+
+
+def create_placeholder_password_hash() -> str:
+    # Social auth users do not set local password at creation time.
+    random_secret = secrets.token_urlsafe(32)
+    return hash_password(random_secret)
+
+
+def decode_access_token(token: str) -> dict:
+    try:
+        return jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
+    except JWTError as exc:
+        raise ValueError("Invalid token") from exc

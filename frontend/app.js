@@ -4,6 +4,7 @@ const message = document.getElementById("auth-message");
 const captchaState = new Map();
 const refreshButtons = document.querySelectorAll("[data-refresh-captcha]");
 const passwordToggles = document.querySelectorAll("[data-toggle-password]");
+const socialButtons = document.querySelectorAll("[data-social][data-mode]");
 const API_BASE_URL = "http://127.0.0.1:8000";
 const DASHBOARD_URL = new URL("dashboard.html", window.location.href).href;
 
@@ -14,6 +15,41 @@ function redirectToDashboard() {
     window.location.href = DASHBOARD_URL;
   }
 }
+
+function handleOAuthHash() {
+  const hash = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : "";
+  if (!hash) {
+    return;
+  }
+
+  const params = new URLSearchParams(hash);
+  const oauthStatus = params.get("oauth");
+  if (!oauthStatus) {
+    return;
+  }
+
+  if (oauthStatus === "success") {
+    const token = params.get("token");
+    const id = params.get("id");
+    const fullName = params.get("full_name");
+    const email = params.get("email");
+    if (token && id && fullName && email) {
+      localStorage.setItem("documind_access_token", token);
+      localStorage.setItem("documind_user", JSON.stringify({ id, full_name: fullName, email }));
+      history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+      redirectToDashboard();
+      return;
+    }
+  }
+
+  if (oauthStatus === "error") {
+    const msg = params.get("message") || "Social authentication failed.";
+    setMessage(msg, "error");
+    history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+  }
+}
+
+handleOAuthHash();
 
 if (localStorage.getItem("documind_access_token")) {
   redirectToDashboard();
@@ -87,6 +123,15 @@ passwordToggles.forEach((toggleButton) => {
     if (icon) {
       icon.className = isHidden ? "fas fa-eye-slash" : "fas fa-eye";
     }
+  });
+});
+
+socialButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    const provider = button.dataset.social;
+    const mode = button.dataset.mode;
+    const oauthStartUrl = `${API_BASE_URL}/api/auth/oauth/${provider}/start?mode=${mode}`;
+    window.location.href = oauthStartUrl;
   });
 });
 

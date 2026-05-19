@@ -32,6 +32,22 @@
         <p class="history-label">Conversation History</p>
         <div id="history-list" class="history-list"></div>
       </section>
+
+      <section class="rail-footer">
+        <button id="settings-toggle" class="settings-toggle" type="button" aria-label="Open settings menu">
+          <i class="fas fa-gear"></i>
+        </button>
+        <div id="settings-menu" class="settings-menu hidden">
+          <button id="open-profile-view" type="button">
+            <i class="fas fa-id-badge"></i>
+            Profile
+          </button>
+          <button id="logout-btn" type="button" class="logout-option">
+            <i class="fas fa-right-from-bracket"></i>
+            Logout
+          </button>
+        </div>
+      </section>
     </aside>
 
     <main class="chat-shell">
@@ -56,39 +72,8 @@
           <i class="fas fa-paper-plane"></i>
         </button>
       </form>
-    </main>
-
-    <aside class="profile-rail">
-      <section class="profile-card">
-        <div class="avatar">
-          <i class="fas fa-user"></i>
-        </div>
-        <h2 id="profile-name">User</h2>
-        <p id="profile-email">user@example.com</p>
-      </section>
-
-      <section class="settings-card">
-        <h3>Change Password</h3>
-        <form id="change-password-form" class="settings-form">
-          <label for="current-password">Current Password</label>
-          <input id="current-password" type="password" required />
-
-          <label for="new-password">New Password</label>
-          <input id="new-password" type="password" minlength="8" required />
-
-          <label for="confirm-password">Confirm New Password</label>
-          <input id="confirm-password" type="password" minlength="8" required />
-
-          <button type="submit" class="settings-btn">Update Password</button>
-        </form>
-      </section>
-
-      <button id="logout-btn" class="logout-btn">
-        <i class="fas fa-right-from-bracket"></i>
-        Logout
-      </button>
       <p id="dashboard-message" class="dashboard-message"></p>
-    </aside>
+    </main>
   </div>
 
   <script src="dashboard.js"></script>

@@ -6,11 +6,11 @@ const newChatBtn = document.getElementById("new-chat-btn");
 const docUpload = document.getElementById("doc-upload");
 const uploadedFiles = document.getElementById("uploaded-files");
 const logoutBtn = document.getElementById("logout-btn");
+const settingsToggle = document.getElementById("settings-toggle");
+const settingsMenu = document.getElementById("settings-menu");
+const openProfileViewBtn = document.getElementById("open-profile-view");
 const dashboardMessage = document.getElementById("dashboard-message");
-const profileName = document.getElementById("profile-name");
-const profileEmail = document.getElementById("profile-email");
 const conversationTitle = document.getElementById("conversation-title");
-const changePasswordForm = document.getElementById("change-password-form");
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 const MAX_UPLOAD_FILES = 5;
 const ALLOWED_EXTENSIONS = new Set(["pdf", "doc", "docx", "xls", "xlsx"]);
@@ -28,10 +28,6 @@ const storageToken = localStorage.getItem("documind_access_token");
 if (!storageUser || !storageToken) {
   window.location.href = "index.html";
 }
-
-const currentUser = JSON.parse(storageUser || "{}");
-profileName.textContent = currentUser.full_name || "DocuMind User";
-profileEmail.textContent = currentUser.email || "user@example.com";
 
 const state = {
   activeConversationId: "conv-1",
@@ -215,35 +211,25 @@ docUpload.addEventListener("change", async () => {
   docUpload.value = "";
 });
 
-changePasswordForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const current = document.getElementById("current-password").value.trim();
-  const next = document.getElementById("new-password").value.trim();
-  const confirm = document.getElementById("confirm-password").value.trim();
-
-  if (!current || !next || !confirm) {
-    setDashboardMessage("Please fill all password fields.", "error");
-    return;
-  }
-
-  if (next.length < 8) {
-    setDashboardMessage("New password must be at least 8 characters.", "error");
-    return;
-  }
-
-  if (next !== confirm) {
-    setDashboardMessage("New password and confirmation do not match.", "error");
-    return;
-  }
-
-  setDashboardMessage("Password UI validated. Connect this to backend endpoint next.", "ok");
-  changePasswordForm.reset();
-});
-
 logoutBtn.addEventListener("click", () => {
   localStorage.removeItem("documind_access_token");
   localStorage.removeItem("documind_user");
   window.location.href = "index.html";
+});
+
+settingsToggle.addEventListener("click", () => {
+  settingsMenu.classList.toggle("hidden");
+});
+
+openProfileViewBtn.addEventListener("click", () => {
+  window.location.href = "profile.html";
+  settingsMenu.classList.add("hidden");
+});
+
+document.addEventListener("click", (event) => {
+  if (!settingsMenu.contains(event.target) && !settingsToggle.contains(event.target)) {
+    settingsMenu.classList.add("hidden");
+  }
 });
 
 renderHistory();

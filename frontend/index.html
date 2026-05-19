@@ -56,9 +56,12 @@
         </div>
 
         <label for="login-password">Password</label>
-        <div class="input-wrapper">
+        <div class="input-wrapper password-field">
           <i class="fas fa-lock"></i>
           <input id="login-password" type="password" placeholder="Enter your password" autocomplete="current-password" required />
+          <button type="button" class="password-toggle" data-toggle-password="login-password" aria-label="Show password">
+            <i class="fas fa-eye"></i>
+          </button>
         </div>
 
         <div class="captcha-block" data-captcha-for="login-form">
@@ -111,9 +114,12 @@
         </div>
 
         <label for="signup-password">Password</label>
-        <div class="input-wrapper">
+        <div class="input-wrapper password-field">
           <i class="fas fa-key"></i>
           <input id="signup-password" type="password" placeholder="Create a strong password" minlength="8" autocomplete="new-password" required />
+          <button type="button" class="password-toggle" data-toggle-password="signup-password" aria-label="Show password">
+            <i class="fas fa-eye"></i>
+          </button>
         </div>
 
         <div class="captcha-block" data-captcha-for="signup-form">

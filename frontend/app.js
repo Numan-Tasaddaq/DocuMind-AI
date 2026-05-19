@@ -3,6 +3,7 @@ const forms = document.querySelectorAll(".auth-form");
 const message = document.getElementById("auth-message");
 const captchaState = new Map();
 const refreshButtons = document.querySelectorAll("[data-refresh-captcha]");
+const passwordToggles = document.querySelectorAll("[data-toggle-password]");
 const API_BASE_URL = "http://127.0.0.1:8000";
 const DASHBOARD_URL = new URL("dashboard.html", window.location.href).href;
 
@@ -68,6 +69,24 @@ refreshButtons.forEach((button) => {
     const targetFormId = button.dataset.refreshCaptcha;
     generateCaptcha(targetFormId);
     setMessage("CAPTCHA refreshed. Please solve the new challenge.");
+  });
+});
+
+passwordToggles.forEach((toggleButton) => {
+  toggleButton.addEventListener("click", () => {
+    const targetInputId = toggleButton.dataset.togglePassword;
+    const input = document.getElementById(targetInputId);
+    if (!input) {
+      return;
+    }
+
+    const icon = toggleButton.querySelector("i");
+    const isHidden = input.type === "password";
+    input.type = isHidden ? "text" : "password";
+    toggleButton.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
+    if (icon) {
+      icon.className = isHidden ? "fas fa-eye-slash" : "fas fa-eye";
+    }
   });
 });
 

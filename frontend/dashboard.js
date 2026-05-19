@@ -11,6 +11,16 @@ const profileName = document.getElementById("profile-name");
 const profileEmail = document.getElementById("profile-email");
 const conversationTitle = document.getElementById("conversation-title");
 const changePasswordForm = document.getElementById("change-password-form");
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+const MAX_UPLOAD_FILES = 5;
+const ALLOWED_EXTENSIONS = new Set(["pdf", "doc", "docx", "xls", "xlsx"]);
+const ALLOWED_MIME_TYPES = new Set([
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+]);
 
 const storageUser = localStorage.getItem("documind_user");
 const storageToken = localStorage.getItem("documind_access_token");
@@ -98,6 +108,32 @@ function renderUploadedFiles() {
   });
 }
 
+function getExtension(fileName) {
+  const parts = fileName.toLowerCase().split(".");
+  return parts.length > 1 ? parts.pop() : "";
+}
+
+function isAllowedFileType(file) {
+  const extension = getExtension(file.name);
+  if (!ALLOWED_EXTENSIONS.has(extension)) {
+    return false;
+  }
+
+  // Some browsers may provide an empty MIME type for local files; extension check remains fallback.
+  return !file.type || ALLOWED_MIME_TYPES.has(file.type);
+}
+
+async function isEncryptedPdf(file) {
+  if (getExtension(file.name) !== "pdf") {
+    return false;
+  }
+
+  // Frontend-only best effort check for encrypted PDFs.
+  const headerChunk = await file.slice(0, 1024 * 1024).arrayBuffer();
+  const headerText = new TextDecoder("latin1").decode(new Uint8Array(headerChunk));
+  return /\/Encrypt\b/i.test(headerText);
+}
+
 chatForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const text = chatInput.value.trim();
@@ -132,15 +168,51 @@ newChatBtn.addEventListener("click", () => {
   renderThread();
 });
 
-docUpload.addEventListener("change", () => {
+docUpload.addEventListener("change", async () => {
   const files = Array.from(docUpload.files || []);
   if (!files.length) {
     return;
   }
 
-  files.forEach((file) => state.uploaded.push(file.name));
+  if (files.length > MAX_UPLOAD_FILES) {
+    setDashboardMessage(`You can select up to ${MAX_UPLOAD_FILES} files at a time.`, "error");
+    docUpload.value = "";
+    return;
+  }
+
+  const accepted = [];
+  for (const file of files) {
+    if (!isAllowedFileType(file)) {
+      setDashboardMessage("Only PDF, DOC, DOCX, XLS, and XLSX files are allowed.", "error");
+      docUpload.value = "";
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      setDashboardMessage(`"${file.name}" exceeds the 10 MB limit.`, "error");
+      docUpload.value = "";
+      return;
+    }
+
+    if (await isEncryptedPdf(file)) {
+      setDashboardMessage(`"${file.name}" is encrypted/password-protected and cannot be uploaded.`, "error");
+      docUpload.value = "";
+      return;
+    }
+
+    accepted.push(file);
+  }
+
+  if (state.uploaded.length + accepted.length > MAX_UPLOAD_FILES) {
+    setDashboardMessage(`Maximum ${MAX_UPLOAD_FILES} uploaded files allowed in this session.`, "error");
+    docUpload.value = "";
+    return;
+  }
+
+  accepted.forEach((file) => state.uploaded.push(file.name));
   renderUploadedFiles();
-  setDashboardMessage(`Uploaded ${files.length} file(s).`, "ok");
+  setDashboardMessage(`Uploaded ${accepted.length} file(s).`, "ok");
+  docUpload.value = "";
 });
 
 changePasswordForm.addEventListener("submit", (event) => {

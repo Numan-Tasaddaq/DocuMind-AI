@@ -1,0 +1,60 @@
+services:
+  db:
+    image: postgres:17
+    container_name: documind_db
+    environment:
+      POSTGRES_DB: documind_ai
+      POSTGRES_USER: documind_app
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-change_me_strong_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - documind_pgdata:/var/lib/postgresql/data
+      - ./backend/database/init_auth.sql:/docker-entrypoint-initdb.d/01_init_auth.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U documind_app -d documind_ai"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: documind_backend
+    env_file:
+      - ./backend/.env
+    environment:
+      APP_ENV: development
+      APP_DEBUG: "true"
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: documind_ai
+      DB_USER: documind_app
+      DB_PASSWORD: ${DB_PASSWORD:-change_me_strong_password}
+      DATABASE_URL: postgresql://documind_app:${DB_PASSWORD:-change_me_strong_password}@db:5432/documind_ai
+      JWT_SECRET: ${JWT_SECRET:-change_this_to_a_long_random_secret}
+      JWT_ALGORITHM: HS256
+      JWT_EXPIRES_MINUTES: "30"
+      PASSWORD_MIN_LENGTH: "8"
+      MAX_LOGIN_ATTEMPTS: "5"
+      ACCOUNT_LOCK_MINUTES: "15"
+      CORS_ORIGINS: "*"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: documind_frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  documind_pgdata:

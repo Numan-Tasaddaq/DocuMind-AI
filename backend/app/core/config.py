@@ -49,6 +49,11 @@ class Settings(BaseSettings):
 
     gemini_api_key: str = Field(default="", alias="GEMINI_API_KEY")
     gemini_model: str = Field(default="gemini-1.5-flash", alias="GEMINI_MODEL")
+    gemini_embedding_model: str = Field(default="models/text-embedding-004", alias="GEMINI_EMBEDDING_MODEL")
+    chroma_persist_directory: str = Field(default="storage/chroma", alias="CHROMA_PERSIST_DIRECTORY")
+    rag_chunk_size: int = Field(default=1200, alias="RAG_CHUNK_SIZE")
+    rag_chunk_overlap: int = Field(default=200, alias="RAG_CHUNK_OVERLAP")
+    rag_top_k: int = Field(default=5, alias="RAG_TOP_K")
 
     @property
     def effective_database_url(self) -> str:

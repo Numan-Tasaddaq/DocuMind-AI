@@ -18,6 +18,7 @@ from app.schemas.chat import (
 )
 from app.schemas.auth import MessageResponse
 from app.services.gemini_service import generate_gemini_reply
+from app.services.rag_service import retrieve_relevant_chunks
 
 router = APIRouter(prefix="/api/chats", tags=["Chats"])
 
@@ -193,13 +194,42 @@ def send_chat_message(
         if payload.uploaded_files
         else ""
     )
+    retrieved_doc_context = ""
+    try:
+        retrieved_chunks = retrieve_relevant_chunks(
+            user_id=user.id,
+            query=user_prompt,
+            filenames=payload.uploaded_files or None,
+            top_k=5,
+        )
+    except Exception:
+        retrieved_chunks = []
+
+    if retrieved_chunks:
+        context_parts = []
+        for chunk in retrieved_chunks:
+            source_name = (chunk.metadata or {}).get("original_filename", "document")
+            context_parts.append(f"[{source_name}]\n{chunk.page_content}")
+        retrieved_doc_context = "\n\nRelevant document context:\n" + "\n\n".join(context_parts)
 
     user_message = ChatMessage(conversation_id=conversation.id, role="user", content=user_prompt)
     db.add(user_message)
     db.flush()
 
     try:
-        reply = generate_gemini_reply(f"{user_prompt}{uploaded_context}", temperature=0.3, max_output_tokens=700)
+        llm_prompt = (
+            "You are a helpful assistant. "
+            "Use the provided document context when relevant. "
+            "If context is insufficient, say that clearly and ask a focused follow-up.\n\n"
+            f"User question:\n{user_prompt}"
+            f"{uploaded_context}"
+            f"{retrieved_doc_context}"
+        )
+        reply = generate_gemini_reply(
+            llm_prompt,
+            temperature=0.3,
+            max_output_tokens=700,
+        )
     except Exception as exc:
         db.rollback()
         raise HTTPException(

@@ -1,5 +1,6 @@
 from app.api.ai_routes import router as ai_router
 from app.api.chat_routes import router as chat_router
+from app.api.document_routes import router as document_router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -44,3 +45,4 @@ def health() -> dict[str, str]:
 app.include_router(auth_router)
 app.include_router(ai_router)
 app.include_router(chat_router)
+app.include_router(document_router)

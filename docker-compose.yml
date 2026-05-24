@@ -33,6 +33,7 @@ services:
       DB_USER: documind_app
       DB_PASSWORD: ${DB_PASSWORD:-change_me_strong_password}
       DATABASE_URL: postgresql://documind_app:${DB_PASSWORD:-change_me_strong_password}@db:5432/documind_ai
+      FRONTEND_AUTH_CALLBACK_URL: http://127.0.0.1:8080/index.html
       JWT_SECRET: ${JWT_SECRET:-change_this_to_a_long_random_secret}
       JWT_ALGORITHM: HS256
       JWT_EXPIRES_MINUTES: "30"
@@ -42,6 +43,8 @@ services:
       CORS_ORIGINS: "*"
     ports:
       - "8000:8000"
+    volumes:
+      - ./backend/storage:/app/storage
     depends_on:
       db:
         condition: service_healthy
@@ -53,6 +56,8 @@ services:
     container_name: documind_frontend
     ports:
       - "8080:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
     depends_on:
       - backend
 

@@ -16,6 +16,7 @@ from app.schemas.chat import (
     SendChatMessageRequest,
     SendChatMessageResponse,
 )
+from app.schemas.document import DocumentOut, UploadDocumentsResponse
 
 __all__ = [
     "AuthResponse",
@@ -33,4 +34,6 @@ __all__ = [
     "RenameConversationRequest",
     "SendChatMessageRequest",
     "SendChatMessageResponse",
+    "DocumentOut",
+    "UploadDocumentsResponse",
 ]

@@ -31,7 +31,6 @@ if (!storageUser || !storageToken) {
 }
 
 const currentUser = JSON.parse(storageUser || "{}");
-const uploadedStorageKey = `documind_uploaded_${currentUser.id || currentUser.email || "guest"}`;
 
 const state = {
   conversations: [],
@@ -50,17 +49,11 @@ function setDashboardMessage(text, type = "") {
 }
 
 function loadUploadedState() {
-  try {
-    const raw = localStorage.getItem(uploadedStorageKey);
-    const parsed = raw ? JSON.parse(raw) : [];
-    state.uploaded = Array.isArray(parsed) ? parsed : [];
-  } catch (error) {
-    state.uploaded = [];
-  }
+  state.uploaded = [];
 }
 
 function persistUploadedState() {
-  localStorage.setItem(uploadedStorageKey, JSON.stringify(state.uploaded));
+  // Uploaded documents are persisted on backend per user.
 }
 
 function handleUnauthorized() {
@@ -70,13 +63,17 @@ function handleUnauthorized() {
 }
 
 async function apiRequest(path, options = {}) {
+  const headers = {
+    Authorization: `Bearer ${storageToken}`,
+    ...(options.headers || {})
+  };
+  if (!(options.body instanceof FormData) && !headers["Content-Type"]) {
+    headers["Content-Type"] = "application/json";
+  }
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${storageToken}`,
-      ...(options.headers || {})
-    }
+    headers
   });
 
   const data = await response.json().catch(() => ({}));
@@ -361,6 +358,19 @@ async function fetchConversations() {
   }
 }
 
+async function fetchUploadedDocuments() {
+  try {
+    const list = await apiRequest("/api/documents");
+    if (!list) {
+      return;
+    }
+    state.uploaded = list.map((document) => document.original_filename);
+    renderUploadedFiles();
+  } catch (error) {
+    setDashboardMessage(error.message || "Unable to load uploaded documents.", "error");
+  }
+}
+
 async function loadConversation(conversationId) {
   try {
     const detail = await apiRequest(`/api/chats/${conversationId}`);
@@ -494,16 +504,42 @@ docUpload.addEventListener("change", async () => {
   }
 
   if (state.uploaded.length + accepted.length > MAX_UPLOAD_FILES) {
-    setDashboardMessage(`Maximum ${MAX_UPLOAD_FILES} uploaded files allowed in this session.`, "error");
+    setDashboardMessage(`Maximum ${MAX_UPLOAD_FILES} uploaded files allowed. Delete some before adding more.`, "error");
     docUpload.value = "";
     return;
   }
 
-  accepted.forEach((file) => state.uploaded.push(file.name));
-  persistUploadedState();
-  renderUploadedFiles();
-  setDashboardMessage(`Uploaded ${accepted.length} file(s).`, "ok");
-  docUpload.value = "";
+  const formData = new FormData();
+  accepted.forEach((file) => formData.append("files", file, file.name));
+
+  try {
+    const result = await apiRequest("/api/documents/upload", {
+      method: "POST",
+      body: formData
+    });
+    if (!result) {
+      return;
+    }
+
+    if (Array.isArray(result.uploaded)) {
+      result.uploaded.forEach((document) => {
+        if (!state.uploaded.includes(document.original_filename)) {
+          state.uploaded.push(document.original_filename);
+        }
+      });
+      renderUploadedFiles();
+    }
+
+    if (result.skipped && result.skipped.length) {
+      setDashboardMessage(`Uploaded with warnings: ${result.skipped.join(" | ")}`, "error");
+    } else {
+      setDashboardMessage(`Uploaded and parsed ${accepted.length} file(s).`, "ok");
+    }
+  } catch (error) {
+    setDashboardMessage(error.message || "Document upload failed.", "error");
+  } finally {
+    docUpload.value = "";
+  }
 });
 
 logoutBtn.addEventListener("click", () => {
@@ -533,7 +569,7 @@ document.addEventListener("click", (event) => {
 
 async function initDashboard() {
   loadUploadedState();
-  renderUploadedFiles();
+  await fetchUploadedDocuments();
 
   await fetchConversations();
   if (!state.conversations.length) {

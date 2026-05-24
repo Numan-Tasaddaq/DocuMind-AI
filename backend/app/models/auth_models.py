@@ -89,3 +89,24 @@ class ChatMessage(Base):
     )
 
     conversation: Mapped["ChatConversation"] = relationship(back_populates="messages")
+
+
+class UserDocument(Base):
+    __tablename__ = "user_documents"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("app_users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    original_filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    stored_filename: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
+    file_extension: Mapped[str] = mapped_column(String(10), nullable=False)
+    mime_type: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    file_size_bytes: Mapped[int] = mapped_column(BIGINT, nullable=False)
+    extracted_text: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )

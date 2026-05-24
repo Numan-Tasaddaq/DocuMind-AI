@@ -47,6 +47,9 @@ class Settings(BaseSettings):
         alias="GITHUB_REDIRECT_URI",
     )
 
+    gemini_api_key: str = Field(default="", alias="GEMINI_API_KEY")
+    gemini_model: str = Field(default="gemini-1.5-flash", alias="GEMINI_MODEL")
+
     @property
     def effective_database_url(self) -> str:
         if self.database_url:

@@ -156,8 +156,11 @@ body {
   border: 1px solid var(--line);
   background: #0f1930;
   border-radius: 10px;
-  padding: 0.65rem;
-  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.45rem;
 }
 
 .history-item.active {
@@ -174,6 +177,98 @@ body {
   margin: 0.2rem 0 0;
   color: var(--text-muted);
   font-size: 0.78rem;
+}
+
+.history-item-main {
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  padding: 0.15rem;
+  width: 100%;
+  cursor: pointer;
+}
+
+.history-item-actions {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.history-action-btn {
+  border: 1px solid transparent;
+  background: transparent;
+  color: #9fb2d8;
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 8px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.history-action-btn:hover {
+  border-color: #33507d;
+  background: #15213d;
+}
+
+.history-action-btn.delete:hover {
+  border-color: #8b2f3f;
+  color: #fecaca;
+}
+
+.history-actions-menu {
+  position: absolute;
+  top: 2rem;
+  right: 0;
+  min-width: 130px;
+  padding: 0.3rem;
+  border-radius: 10px;
+  border: 1px solid #2f4a77;
+  background: #0d1a33;
+  display: grid;
+  gap: 0.2rem;
+  z-index: 30;
+}
+
+.history-menu-option {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-main);
+  border-radius: 8px;
+  padding: 0.45rem 0.5rem;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.history-menu-option:hover {
+  border-color: #33507d;
+  background: #15213d;
+}
+
+.history-menu-option.delete {
+  color: #fecaca;
+}
+
+.history-menu-option.delete:hover {
+  border-color: #8b2f3f;
+  background: #311520;
+}
+
+.history-rename-input {
+  width: 100%;
+  border: 1px solid #3b82f6;
+  background: #0d162c;
+  color: var(--text-main);
+  border-radius: 8px;
+  padding: 0.35rem 0.45rem;
+  font: inherit;
+  font-size: 0.9rem;
 }
 
 .chat-shell {

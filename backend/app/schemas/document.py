@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class DocumentOut(BaseModel):
@@ -16,4 +16,4 @@ class DocumentOut(BaseModel):
 
 class UploadDocumentsResponse(BaseModel):
     uploaded: list[DocumentOut]
-    skipped: list[str] = []
+    skipped: list[str] = Field(default_factory=list)

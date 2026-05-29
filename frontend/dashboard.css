@@ -282,7 +282,7 @@ body {
 .chat-topbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 1rem;
 }
 
@@ -292,24 +292,11 @@ body {
   font-size: clamp(1rem, 2vw, 1.3rem);
 }
 
-.upload-btn {
-  border: 1px solid var(--line);
-  background: var(--bg-soft);
-  color: var(--text-main);
-  border-radius: 10px;
-  padding: 0.55rem 0.75rem;
-  cursor: pointer;
-  font-size: 0.9rem;
-}
-
-.upload-btn:hover {
-  border-color: #60a5fa;
-}
-
 .uploaded-files {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .file-chip {
@@ -317,8 +304,41 @@ body {
   background: #0f2d21;
   color: #9ef0c6;
   border-radius: 999px;
-  padding: 0.35rem 0.65rem;
+  padding: 0.25rem 0.35rem 0.25rem 0.65rem;
   font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.file-chip.uploading {
+  border-color: #2563eb;
+  background: #10203f;
+  color: #bfdbfe;
+}
+
+.file-chip-name {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-chip-remove {
+  border: 1px solid transparent;
+  background: transparent;
+  color: inherit;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.file-chip-remove:hover {
+  border-color: #2f4a77;
+  background: #142240;
 }
 
 .chat-thread {
@@ -353,6 +373,7 @@ body {
 .chat-composer {
   display: flex;
   gap: 0.6rem;
+  align-items: flex-end;
 }
 
 .chat-composer textarea {
@@ -382,6 +403,48 @@ body {
   width: 50px;
   cursor: pointer;
   font-size: 1rem;
+}
+
+.upload-icon-btn {
+  border: 1px solid #2f4a77;
+  background: #132446;
+  color: #bfdbfe;
+  border-radius: 12px;
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.upload-icon-btn:hover {
+  border-color: #60a5fa;
+  background: #183061;
+}
+
+.quick-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.quick-action-btn {
+  border: 1px solid #2f4a77;
+  background: #121f3d;
+  color: #bfdbfe;
+  border-radius: 999px;
+  padding: 0.4rem 0.7rem;
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.quick-action-btn:hover {
+  border-color: #60a5fa;
+  background: #1a2d57;
 }
 
 .send-btn:hover {

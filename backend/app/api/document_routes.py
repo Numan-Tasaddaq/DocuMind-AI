@@ -125,17 +125,9 @@ async def upload_documents(
                 extracted_text=extracted_text,
             )
             indexed_document_ids.append(record.id)
-        except Exception:
-            db.rollback()
-            for indexed_id in indexed_document_ids:
-                delete_document_vectors(indexed_id)
-            for created_path in created_file_paths:
-                if created_path.exists():
-                    created_path.unlink()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"{original_filename}: failed to index document for retrieval.",
-            )
+        except Exception as exc:
+            # Keep uploaded document saved even if vector indexing fails.
+            skipped.append(f"{original_filename}: uploaded, but failed to index for retrieval ({exc})")
 
         uploaded.append(record)
 

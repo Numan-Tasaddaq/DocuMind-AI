@@ -1,4 +1,5 @@
 import json
+import time
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
@@ -48,6 +49,56 @@ def _post_generate_content(model_name: str, payload: dict) -> dict:
         return json.loads(response.read().decode("utf-8"))
 
 
+def _extract_api_error_message(exc: HTTPError) -> str:
+    try:
+        error_body = exc.read().decode("utf-8")
+        parsed = json.loads(error_body)
+        api_message = parsed.get("error", {}).get("message")
+        if api_message:
+            return str(api_message)
+    except Exception:
+        pass
+    return str(exc.reason)
+
+
+def _is_transient_generation_error(status_code: int, message: str) -> bool:
+    lowered = (message or "").lower()
+    return (
+        status_code in {429, 500, 503}
+        or "high demand" in lowered
+        or "try again later" in lowered
+        or "resource exhausted" in lowered
+        or "temporarily unavailable" in lowered
+    )
+
+
+def _generation_model_order() -> list[str]:
+    requested = _normalize_model_name(settings.gemini_model)
+    preferred_defaults = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
+    available_models: list[str] = []
+    try:
+        available_models = _list_generate_models()
+    except Exception:
+        available_models = []
+
+    ordered: list[str] = []
+    if requested:
+        ordered.append(requested)
+
+    if available_models:
+        for model in preferred_defaults:
+            if model in available_models and model not in ordered:
+                ordered.append(model)
+        for model in available_models:
+            if model not in ordered:
+                ordered.append(model)
+    else:
+        for model in preferred_defaults:
+            if model not in ordered:
+                ordered.append(model)
+    return ordered
+
+
 def generate_gemini_reply(
     prompt: str,
     *,
@@ -68,82 +119,51 @@ def generate_gemini_reply(
         },
     }
 
-    body: dict | None = None
-    try:
-        body = _post_generate_content(settings.gemini_model, payload)
-    except HTTPError as exc:
-        detail = f"Gemini request failed with status {exc.code}."
-        try:
-            error_body = exc.read().decode("utf-8")
-            parsed = json.loads(error_body)
-            api_message = parsed.get("error", {}).get("message")
-            if api_message:
-                detail = f"Gemini API error: {api_message}"
+    last_detail = "Unable to generate response right now."
+    models_to_try = _generation_model_order()[:5]
 
-            is_model_error = exc.code == 404 and (
-                "models/" in (api_message or "") and "generateContent" in (api_message or "")
-            )
-            if is_model_error:
-                available_models = []
-                try:
-                    available_models = _list_generate_models()
-                except Exception:
-                    available_models = []
-
-                if available_models:
-                    preferred = next(
-                        (
-                            model
-                            for model in available_models
-                            if model in {"gemini-2.0-flash", "gemini-2.5-flash", "gemini-1.5-flash"}
-                        ),
-                        available_models[0],
+    for model_name in models_to_try:
+        for attempt in range(3):
+            try:
+                body = _post_generate_content(model_name, payload)
+                candidates = body.get("candidates") or []
+                if not candidates:
+                    raise HTTPException(
+                        status_code=status.HTTP_502_BAD_GATEWAY,
+                        detail="Gemini returned no candidate response.",
                     )
-                    try:
-                        body = _post_generate_content(preferred, payload)
-                    except HTTPError as retry_exc:
-                        retry_detail = f"Gemini API error: {retry_exc.reason}"
-                        try:
-                            retry_parsed = json.loads(retry_exc.read().decode("utf-8"))
-                            retry_msg = retry_parsed.get("error", {}).get("message")
-                            if retry_msg:
-                                retry_detail = f"Gemini API error: {retry_msg}"
-                        except Exception:
-                            pass
-                        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=retry_detail) from retry_exc
-                    except URLError as retry_exc:
-                        raise HTTPException(
-                            status_code=status.HTTP_502_BAD_GATEWAY,
-                            detail="Unable to reach Gemini API.",
-                        ) from retry_exc
-                else:
-                    detail = (
-                        "Gemini model is unavailable for generateContent. "
-                        "Update GEMINI_MODEL to a currently supported model."
+
+                parts = candidates[0].get("content", {}).get("parts", [])
+                texts = [part.get("text", "") for part in parts if isinstance(part, dict)]
+                reply = "\n".join(text for text in texts if text).strip()
+                if not reply:
+                    raise HTTPException(
+                        status_code=status.HTTP_502_BAD_GATEWAY,
+                        detail="Gemini returned an empty response.",
                     )
-        except Exception:
-            pass
-        if body is None:
-            raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=detail) from exc
-    except URLError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Unable to reach Gemini API.",
-        ) from exc
+                return reply
+            except HTTPError as exc:
+                api_message = _extract_api_error_message(exc)
+                last_detail = f"Gemini API error: {api_message}"
 
-    candidates = body.get("candidates") or []
-    if not candidates:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Gemini returned no candidate response.",
-        )
+                is_model_error = exc.code == 404 and "generatecontent" in api_message.lower()
+                if is_model_error:
+                    break
 
-    parts = candidates[0].get("content", {}).get("parts", [])
-    texts = [part.get("text", "") for part in parts if isinstance(part, dict)]
-    reply = "\n".join(text for text in texts if text).strip()
-    if not reply:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Gemini returned an empty response.",
-        )
-    return reply
+                if _is_transient_generation_error(exc.code, api_message):
+                    if attempt < 2:
+                        time.sleep(1.5 * (attempt + 1))
+                        continue
+                    break
+
+                raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=last_detail) from exc
+            except URLError as exc:
+                if attempt < 2:
+                    time.sleep(1.5 * (attempt + 1))
+                    continue
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail="Unable to reach Gemini API.",
+                ) from exc
+
+    raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=last_detail)

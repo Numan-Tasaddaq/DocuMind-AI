@@ -1,5 +1,7 @@
 import uuid
 from pathlib import Path
+import json
+from urllib.request import Request, urlopen
 
 from app.core.config import get_settings
 
@@ -22,13 +24,56 @@ def _resolve_chroma_directory() -> str:
     return str(path)
 
 
+def _normalize_model_name(model_name: str) -> str:
+    cleaned = (model_name or "").strip()
+    if not cleaned:
+        return ""
+    if not cleaned.startswith("models/"):
+        cleaned = f"models/{cleaned}"
+    return cleaned
+
+
+def _list_embedding_models() -> list[str]:
+    if not settings.gemini_api_key:
+        return []
+    url = f"https://generativelanguage.googleapis.com/v1beta/models?key={settings.gemini_api_key}"
+    req = Request(url=url, method="GET")
+    with urlopen(req, timeout=20) as response:
+        body = json.loads(response.read().decode("utf-8"))
+
+    available: list[str] = []
+    for model in body.get("models", []):
+        methods = model.get("supportedGenerationMethods") or []
+        if "embedContent" in methods:
+            name = model.get("name", "").strip()
+            if name:
+                available.append(name)
+    return available
+
+
 def _embeddings():
     from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
-    return GoogleGenerativeAIEmbeddings(
-        model=settings.gemini_embedding_model,
-        google_api_key=settings.gemini_api_key,
-    )
+    requested = _normalize_model_name(settings.gemini_embedding_model)
+    candidates = [
+        requested,
+        "models/gemini-embedding-001",
+        "models/embedding-001",
+    ]
+
+    available = []
+    try:
+        available = _list_embedding_models()
+    except Exception:
+        available = []
+
+    if available:
+        prioritized = [name for name in candidates if name in available]
+        model_name = prioritized[0] if prioritized else available[0]
+    else:
+        model_name = requested or "models/embedding-001"
+
+    return GoogleGenerativeAIEmbeddings(model=model_name, google_api_key=settings.gemini_api_key)
 
 
 def _vector_store():
@@ -46,14 +91,18 @@ def _build_documents_from_file(file_path: Path, extension: str, extracted_text: 
 
     normalized = extension.lower().strip(".")
 
-    if normalized == "pdf":
-        from langchain_community.document_loaders import PyPDFLoader
+    try:
+        if normalized == "pdf":
+            from langchain_community.document_loaders import PyPDFLoader
 
-        return PyPDFLoader(str(file_path)).load()
-    if normalized == "docx":
-        from langchain_community.document_loaders import Docx2txtLoader
+            return PyPDFLoader(str(file_path)).load()
+        if normalized == "docx":
+            from langchain_community.document_loaders import Docx2txtLoader
 
-        return Docx2txtLoader(str(file_path)).load()
+            return Docx2txtLoader(str(file_path)).load()
+    except Exception:
+        # Fall back to parser extracted text if a loader fails on specific files.
+        pass
 
     return [
         Document(

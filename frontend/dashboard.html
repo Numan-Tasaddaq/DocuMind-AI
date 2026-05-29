@@ -53,13 +53,6 @@
     <main class="chat-shell">
       <header class="chat-topbar">
         <h1 id="conversation-title">Document Assistant</h1>
-        <div class="top-actions">
-          <label class="upload-btn" for="doc-upload">
-            <i class="fas fa-file-arrow-up"></i>
-            Upload Document
-          </label>
-          <input id="doc-upload" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx" multiple hidden />
-        </div>
       </header>
 
       <section id="uploaded-files" class="uploaded-files"></section>
@@ -68,10 +61,20 @@
 
       <form id="chat-form" class="chat-composer">
         <textarea id="chat-input" rows="1" placeholder="Ask a question about your document..." required></textarea>
+        <button type="button" id="composer-upload-btn" class="upload-icon-btn" aria-label="Upload documents">
+          <i class="fas fa-paperclip"></i>
+        </button>
         <button type="submit" class="send-btn">
           <i class="fas fa-paper-plane"></i>
         </button>
+        <input id="doc-upload" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx" multiple hidden />
       </form>
+      <section class="quick-actions" aria-label="Quick actions">
+        <button type="button" id="summarize-latest-btn" class="quick-action-btn">
+          <i class="fas fa-file-lines"></i>
+          Summarize Latest
+        </button>
+      </section>
       <p id="dashboard-message" class="dashboard-message"></p>
     </main>
   </div>

@@ -4,6 +4,8 @@ const chatForm = document.getElementById("chat-form");
 const chatInput = document.getElementById("chat-input");
 const newChatBtn = document.getElementById("new-chat-btn");
 const docUpload = document.getElementById("doc-upload");
+const composerUploadBtn = document.getElementById("composer-upload-btn");
+const summarizeLatestBtn = document.getElementById("summarize-latest-btn");
 const uploadedFiles = document.getElementById("uploaded-files");
 const logoutBtn = document.getElementById("logout-btn");
 const settingsToggle = document.getElementById("settings-toggle");
@@ -37,7 +39,8 @@ const state = {
   activeConversationId: null,
   uploaded: [],
   openMenuConversationId: null,
-  renameConversationId: null
+  renameConversationId: null,
+  isUploadingDocuments: false
 };
 
 function setDashboardMessage(text, type = "") {
@@ -303,12 +306,58 @@ function renderThread() {
 
 function renderUploadedFiles() {
   uploadedFiles.innerHTML = "";
-  state.uploaded.forEach((name) => {
+  if (state.isUploadingDocuments) {
+    const loadingChip = document.createElement("span");
+    loadingChip.className = "file-chip uploading";
+    loadingChip.textContent = "Uploading document...";
+    uploadedFiles.appendChild(loadingChip);
+  }
+  state.uploaded.forEach((uploadedDoc) => {
     const chip = document.createElement("span");
     chip.className = "file-chip";
-    chip.textContent = name;
+    chip.innerHTML = `
+      <span class="file-chip-name">${escapeHtml(uploadedDoc.name)}</span>
+      <button type="button" class="file-chip-remove" aria-label="Remove ${escapeHtml(uploadedDoc.name)}">
+        <i class="fas fa-xmark"></i>
+      </button>
+    `;
+    const removeBtn = chip.querySelector(".file-chip-remove");
+    removeBtn.addEventListener("click", async () => {
+      try {
+        await apiRequest(`/api/documents/${uploadedDoc.id}`, { method: "DELETE" });
+        state.uploaded = state.uploaded.filter((item) => item.id !== uploadedDoc.id);
+        renderUploadedFiles();
+        setDashboardMessage(`Removed "${uploadedDoc.name}".`, "ok");
+      } catch (error) {
+        setDashboardMessage(error.message || "Unable to remove document.", "error");
+      }
+    });
     uploadedFiles.appendChild(chip);
   });
+}
+
+function normalizeIsoDate(value) {
+  const date = new Date(value || "");
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+  return date.toISOString();
+}
+
+function sortUploadedDocuments() {
+  state.uploaded.sort((a, b) => {
+    const aTime = new Date(a.createdAt || 0).getTime();
+    const bTime = new Date(b.createdAt || 0).getTime();
+    return bTime - aTime;
+  });
+}
+
+function getLatestUploadedDocument() {
+  if (!state.uploaded.length) {
+    return null;
+  }
+  sortUploadedDocuments();
+  return state.uploaded[0];
 }
 
 function getExtension(fileName) {
@@ -364,7 +413,12 @@ async function fetchUploadedDocuments() {
     if (!list) {
       return;
     }
-    state.uploaded = list.map((document) => document.original_filename);
+    state.uploaded = list.map((docItem) => ({
+      id: docItem.id,
+      name: docItem.original_filename,
+      createdAt: normalizeIsoDate(docItem.created_at)
+    }));
+    sortUploadedDocuments();
     renderUploadedFiles();
   } catch (error) {
     setDashboardMessage(error.message || "Unable to load uploaded documents.", "error");
@@ -393,26 +447,26 @@ async function loadConversation(conversationId) {
   }
 }
 
-chatForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const text = chatInput.value.trim();
+async function sendPromptToChat(promptText, options = {}) {
+  const text = (promptText || "").trim();
   if (!text) {
     return;
   }
-
   const active = getActiveConversation();
   if (!active) {
     setDashboardMessage("No active conversation selected.", "error");
     return;
   }
 
-  chatInput.value = "";
-  chatInput.disabled = true;
+  const userLabel = options.userLabel || text;
+  const selectedFiles = Array.isArray(options.uploadedFileNames)
+    ? options.uploadedFileNames
+    : state.uploaded.map((document) => document.name);
 
   const optimisticUser = {
     id: `tmp-u-${Date.now()}`,
     role: "user",
-    content: text,
+    content: userLabel,
     created_at: new Date().toISOString()
   };
   const optimisticAssistant = {
@@ -431,7 +485,7 @@ chatForm.addEventListener("submit", async (event) => {
       method: "POST",
       body: JSON.stringify({
         prompt: text,
-        uploaded_files: state.uploaded
+        uploaded_files: selectedFiles
       })
     });
     if (!data) {
@@ -443,6 +497,20 @@ chatForm.addEventListener("submit", async (event) => {
     optimisticAssistant.content = error.message || "Unable to get AI response right now.";
     renderThread();
     setDashboardMessage(optimisticAssistant.content, "error");
+  }
+}
+
+chatForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const text = chatInput.value.trim();
+  if (!text) {
+    return;
+  }
+
+  chatInput.value = "";
+  chatInput.disabled = true;
+  try {
+    await sendPromptToChat(text);
   } finally {
     chatInput.disabled = false;
     chatInput.focus();
@@ -466,6 +534,28 @@ newChatBtn.addEventListener("click", async () => {
   state.activeConversationId = created.id;
   renderHistory();
   renderThread();
+});
+
+composerUploadBtn.addEventListener("click", () => {
+  docUpload.click();
+});
+
+summarizeLatestBtn.addEventListener("click", async () => {
+  const latest = getLatestUploadedDocument();
+  if (!latest) {
+    setDashboardMessage("Upload at least one document first.", "error");
+    return;
+  }
+
+  const summaryPrompt =
+    `Summarize the document "${latest.name}" in concise bullet points. ` +
+    "Include main profile summary, key skills, experience highlights, and education. " +
+    "If any section is missing, say 'Not found' for that section.";
+
+  await sendPromptToChat(summaryPrompt, {
+    userLabel: `Summarize latest document: ${latest.name}`,
+    uploadedFileNames: [latest.name]
+  });
 });
 
 docUpload.addEventListener("change", async () => {
@@ -512,6 +602,9 @@ docUpload.addEventListener("change", async () => {
   const formData = new FormData();
   accepted.forEach((file) => formData.append("files", file, file.name));
 
+  state.isUploadingDocuments = true;
+  renderUploadedFiles();
+
   try {
     const result = await apiRequest("/api/documents/upload", {
       method: "POST",
@@ -522,11 +615,16 @@ docUpload.addEventListener("change", async () => {
     }
 
     if (Array.isArray(result.uploaded)) {
-      result.uploaded.forEach((document) => {
-        if (!state.uploaded.includes(document.original_filename)) {
-          state.uploaded.push(document.original_filename);
+      result.uploaded.forEach((docItem) => {
+        if (!state.uploaded.some((item) => item.id === docItem.id)) {
+          state.uploaded.push({
+            id: docItem.id,
+            name: docItem.original_filename,
+            createdAt: normalizeIsoDate(docItem.created_at)
+          });
         }
       });
+      sortUploadedDocuments();
       renderUploadedFiles();
     }
 
@@ -538,6 +636,8 @@ docUpload.addEventListener("change", async () => {
   } catch (error) {
     setDashboardMessage(error.message || "Document upload failed.", "error");
   } finally {
+    state.isUploadingDocuments = false;
+    renderUploadedFiles();
     docUpload.value = "";
   }
 });

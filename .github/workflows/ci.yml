@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  backend-syntax:
+    name: Backend Syntax Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile backend sources
+        run: python -m compileall backend/app
+
+  frontend-syntax:
+    name: Frontend Syntax Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Validate dashboard JavaScript syntax
+        run: node -e "new Function(require('fs').readFileSync('frontend/dashboard.js','utf8')); console.log('dashboard.js syntax ok')"
+
+      - name: Validate auth JavaScript syntax
+        run: node -e "new Function(require('fs').readFileSync('frontend/app.js','utf8')); console.log('app.js syntax ok')"
+
+      - name: Validate profile JavaScript syntax
+        run: node -e "new Function(require('fs').readFileSync('frontend/profile.js','utf8')); console.log('profile.js syntax ok')"
+
+  docker-build:
+    name: Docker Build Check
+    runs-on: ubuntu-latest
+    needs: [backend-syntax, frontend-syntax]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build backend image
+        run: docker build -f backend/Dockerfile -t documind-backend-ci backend
+
+      - name: Build frontend image
+        run: docker build -f frontend/Dockerfile -t documind-frontend-ci frontend

@@ -31,6 +31,20 @@ jobs:
             throw
           }
 
+      - name: Ensure backend env file exists
+        shell: powershell
+        run: |
+          if (-not (Test-Path "backend/.env")) {
+            if (Test-Path "backend/.env.example") {
+              Copy-Item "backend/.env.example" "backend/.env"
+              Write-Host "Created backend/.env from backend/.env.example for deployment."
+            } else {
+              throw "backend/.env is missing and backend/.env.example was not found."
+            }
+          } else {
+            Write-Host "backend/.env already exists."
+          }
+
       - name: Rebuild and restart services
         shell: powershell
         run: |

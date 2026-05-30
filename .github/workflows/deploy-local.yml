@@ -1,0 +1,83 @@
+name: CD Local Deploy
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+concurrency:
+  group: local-deploy-main
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-local:
+    name: Deploy To Local Docker
+    runs-on: [self-hosted, windows]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Show Docker version
+        shell: powershell
+        run: |
+          docker version
+
+      - name: Rebuild and restart services
+        shell: powershell
+        run: |
+          $composePlugin = $true
+          try {
+            docker compose version | Out-Null
+          } catch {
+            $composePlugin = $false
+          }
+
+          if ($composePlugin) {
+            docker compose down
+            docker compose up -d --build
+          } else {
+            docker-compose down
+            docker-compose up -d --build
+          }
+
+      - name: Wait for backend health
+        shell: powershell
+        run: |
+          $maxAttempts = 30
+          $ok = $false
+          for ($i = 1; $i -le $maxAttempts; $i++) {
+            try {
+              $response = Invoke-WebRequest -Uri "http://127.0.0.1:8000/health" -UseBasicParsing -TimeoutSec 5
+              if ($response.StatusCode -eq 200) {
+                $ok = $true
+                Write-Host "Backend health check passed."
+                break
+              }
+            } catch {
+              Start-Sleep -Seconds 3
+            }
+          }
+
+          if (-not $ok) {
+            throw "Backend health check failed after deployment."
+          }
+
+      - name: Show running containers
+        shell: powershell
+        run: |
+          $composePlugin = $true
+          try {
+            docker compose version | Out-Null
+          } catch {
+            $composePlugin = $false
+          }
+
+          if ($composePlugin) {
+            docker compose ps
+          } else {
+            docker-compose ps
+          }

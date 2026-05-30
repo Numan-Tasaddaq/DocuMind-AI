@@ -19,12 +19,17 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Show Docker version
         shell: powershell
         run: |
-          docker version
+          try {
+            docker version
+          } catch {
+            Write-Error "Docker is not reachable from the self-hosted runner account. If runner runs as NETWORK SERVICE, switch runner service to your Windows user account."
+            throw
+          }
 
       - name: Rebuild and restart services
         shell: powershell
